@@ -1,11 +1,324 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus</title>
-    </head>
-    <body>
-        PakePlus
-    </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ChatGPT</title>
+    <style>
+        :root {
+            --app-height: 100vh;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: #f5f5f7;
+            color: #333;
+            height: var(--app-height);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background-color: #fff;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.1);
+        }
+        .back-btn {
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            margin-right: 16px; cursor: pointer;
+        }
+        .chat-title {
+            font-size: 18px; font-weight: 600; margin-right: 16px;
+        }
+        .memory-status { font-size: 14px; color: #888; }
+        .delete-btn {
+            width: 24px; height: 24px;
+            display: flex; align-items: center; justify-content: center;
+            margin-left: auto; cursor: pointer;
+        }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background-color: #ff9500; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; margin-left: 16px;
+        }
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 32px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .logo-container {
+            width: 200px; height: 200px; margin-bottom: 32px; flex-shrink: 0;
+        }
+        .logo-container svg { width: 200px; height: 200px; }
+        .feature-buttons {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 16px; width: 100%; max-width: 600px; margin-bottom: 32px; flex-shrink: 0;
+        }
+        .feature-btn {
+            display: flex; align-items: center; padding: 16px;
+            background-color: #fff; border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; transition: background-color 0.2s;
+        }
+        .feature-btn:hover { background-color: #f0f0f0; }
+        .feature-icon { width: 24px; height: 24px; margin-right: 12px; color: #007aff; }
+        .feature-text { font-size: 16px; color: #333; }
+        .footer {
+            flex-shrink: 0; background-color: #fff; padding: 16px;
+            box-shadow: 0 -1px 0 rgba(0,0,0,0.1);
+        }
+        .action-buttons { display: flex; gap: 12px; margin-bottom: 16px; }
+        .export-btn, .upgrade-btn {
+            padding: 8px 16px; border-radius: 8px; font-size: 14px; cursor: pointer;
+        }
+        .export-btn { background-color: #fff; border: 1px solid #ddd; color: #666; }
+        .upgrade-btn { background-color: #fff9e6; border: 1px solid #ffd700; color: #ff9500; }
+        .input-container { display: flex; gap: 12px; width: 100%; }
+        .message-input {
+            flex: 1; padding: 12px 16px; border: 1px solid #ddd;
+            border-radius: 24px; font-size: 16px; outline: none; transition: border-color 0.3s;
+        }
+        .message-input:focus { border-color: #007aff; }
+        .send-btn {
+            width: 48px; height: 48px; border-radius: 50%; background-color: #007aff;
+            color: #fff; border: none; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: background-color 0.3s; flex-shrink: 0;
+        }
+        .send-btn:hover { background-color: #0056cc; }
+        .disclaimer { text-align: center; font-size: 12px; color: #888; margin-top: 8px; }
+        .message {
+            max-width: 80%; padding: 12px 16px; border-radius: 15px;
+            line-height: 1.5; white-space: pre-wrap; word-wrap: break-word; margin-bottom: 16px;
+        }
+        .user-message {
+            background-color: #007bff; color: white; align-self: flex-end; border-bottom-right-radius: 5px;
+        }
+        .ai-message {
+            background-color: #e9ecef; color: #333; align-self: flex-start; border-bottom-left-radius: 5px;
+        }
+        .chat-box {
+            width: 100%; max-width: 600px; display: flex; flex-direction: column;
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <div class="header">
+        <div class="back-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        </div>
+        <div class="chat-title">ChatGPT <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+        <div class="memory-status">记忆已清</div>
+        <div class="delete-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+        </div>
+        <div class="user-avatar">HA</div>
+    </div>
+
+    <!-- 聊天主区域 -->
+    <div class="main-content">
+        <div class="logo-container">
+            <svg data-name="OpenAI Logo" viewBox="140 140 520 520">
+              <defs>
+                <linearGradient id="linear" x1="100%" y1="22%" x2="0%" y2="78%">
+                  <stop offset="0%" stop-color="rgb(131,211,231)" /><stop offset="2%" stop-color="rgb(127,203,229)" />
+                  <stop offset="25%" stop-color="rgb(86,115,217)" /><stop offset="49%" stop-color="rgb(105,80,190)" />
+                  <stop offset="98%" stop-color="rgb(197,59,119)" /><stop offset="100%" stop-color="rgb(197,59,119)" />
+                </linearGradient>
+              </defs>
+              <path id="logo" d="M617.24 354a126.36 126.36 0 0 0 -10.86-103.79 127.8 127.8 0 0 0 -137.65-61.32 126.36 126.36 0 0 0 -95.31-42.49 127.81 127.81 0 0 0 -121.92 88.49 126.4 126.4 0 0 0 -84.5 61.3 127.82 127.82 0 0 0 15.72 149.86 126.36 126.36 0 0 0 10.86 103.79 127.81 127.81 0 0 0 137.65 61.32 126.36 126.36 0 0 0 95.31 42.49 127.81 127.81 0 0 0 121.96-88.54 126.4 126.4 0 0 0 84.5-61.3 127.82 127.82 0 0 0 -15.76-149.81zm-190.66 266.49a94.79 94.79 0 0 1 -60.85-22c.77-.42 2.12-1.16 3-1.7l101-58.34a16.42 16.42 0 0 0 8.3-14.37v-142.39l42.69 24.65a1.52 1.52 0 0 1 .83 1.17v117.92a95.18 95.18 0 0 1 -94.97 95.06zm-204.24-87.23a94.74 94.74 0 0 1 -11.34-63.7c.75.45 2.06 1.25 3 1.79l101 58.34a16.44 16.44 0 0 0 16.59 0l123.31-71.2v49.3a1.53 1.53 0 0 1 -.61 1.31l-102.1 58.95a95.16 95.16 0 0 1 -129.85-34.79zm-26.57-220.49a94.71 94.71 0 0 1 49.48-41.68c0 .87-.05 2.41-.05 3.48v116.68a16.41 16.41 0 0 0 8.29 14.36l123.31 71.19-42.69 24.65a1.53 1.53 0 0 1 -1.44.13l-102.11-59a95.16 95.16 0 0 1 -34.79-129.81zm350.74 81.62-123.31-71.2 42.69-24.64a1.53 1.53 0 0 1 1.44-.13l102.11 58.95a95.08 95.08 0 0 1 -14.69 171.55c0-.88 0-2.42 0-3.49v-116.68a16.4 16.4 0 0 0 -8.24-14.36zm42.49-63.95c-.75-.46-2.06-1.25-3-1.79l-101-58.34a16.46 16.46 0 0 0 -16.59 0l-123.31 71.2v-49.3a1.53 1.53 0 0 1 .61-1.31l102.1-58.9a95.07 95.07 0 0 1 141.19 98.44zm-267.11 87.87-42.7-24.65a1.52 1.52 0 0 1 -.83-1.17v-117.92a95.07 95.07 0 0 1 155.9-73c-.77.42-2.11 1.16-3 1.7l-101 58.34a16.41 16.41 0 0 0 -8.3 14.36zm23.19-50 54.92-31.72 54.92 31.7v63.42l-54.92 31.7-54.92-31.7z" fill="url(#linear)" />
+            </svg>
+        </div>
+        <div class="feature-buttons">
+            <!-- 功能按钮省略，保留之前的结构即可 -->
+            <div class="feature-btn"><span class="feature-text">为烘焙店创作一幅插图</span></div>
+            <div class="feature-btn"><span class="feature-text">用于在新城市结交朋友的活动</span></div>
+            <div class="feature-btn"><span class="feature-text">测试一下我的古代文明知识</span></div>
+            <div class="feature-btn"><span class="feature-text">数数照片中的物品数量</span></div>
+        </div>
+        <div class="chat-box" id="chatBox"></div>
+    </div>
+
+    <!-- 底部输入区 -->
+    <div class="footer">
+        <div class="action-buttons">
+            <button class="export-btn">Export</button>
+            <button class="upgrade-btn">⚡ 升级套餐</button>
+        </div>
+        <div class="input-container">
+            <input type="text" id="messageInput" class="message-input" placeholder='给"ChatGPT"发送消息'>
+            <button class="send-btn" id="sendBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
+        <div class="disclaimer">ChatGPT 也可能会犯错，请核查重要信息。</div>
+    </div>
+
+    <script>
+        // 获取DOM元素
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatBox = document.getElementById('chatBox');
+        const mainContent = document.querySelector('.main-content');
+
+        // DeepSeek API 配置
+        const API_KEY = 'sk-893bfb00c1aa4bed9f677bb53ce184f3'; // 【必须替换】
+        const API_URL = 'https://api.deepseek.com/chat/completions';
+
+        // ==========================================
+        // 核心修复 1：增加对话上下文记忆
+        // ==========================================
+        const chatHistory = []; // 维护对话历史数组
+
+        // 动态计算可视区域高度，解决键盘遮挡问题
+        const setAppHeight = () => {
+            const height = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+            document.documentElement.style.setProperty('--app-height', `${height}px`);
+        };
+        setAppHeight();
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', setAppHeight);
+            window.visualViewport.addEventListener('scroll', setAppHeight);
+        }
+        window.addEventListener('resize', setAppHeight);
+
+        messageInput.addEventListener('focus', () => {
+            setTimeout(() => {
+                messageInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 300);
+        });
+
+        // ==========================================
+        // 核心修复 2：完善请求与流式解析逻辑
+        // ==========================================
+        async function sendMessage() {
+            const userMessage = messageInput.value.trim();
+            if (!userMessage) return;
+
+            // 1. 将用户消息加入界面和历史
+            addMessage(userMessage, 'user');
+            chatHistory.push({ role: 'user', content: userMessage });
+            
+            // 2. 清空输入框，按钮转圈
+            messageInput.value = '';
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><circle cx="12" cy="12" r="10"></circle><path d="M12 2v20M17 7l-5 5-5-5"></path></svg>';
+
+            try {
+                // 3. 发起请求（将完整的 chatHistory 传给 API）
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'deepseek-chat',
+                        messages: chatHistory, // 传入上下文
+                        stream: true
+                    })
+                });
+
+                if (!response.ok) {
+                    // 如果API返回错误（如余额不足、密钥错误），读取错误信息
+                    const errData = await response.json();
+                    throw new Error(errData.error?.message || '请求失败');
+                }
+
+                // 4. 处理流式响应
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let aiResponse = '';
+                let buffer = '';
+
+                // 先在界面创建一个空的AI消息框
+                addMessage('', 'ai');
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); 
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const dataStr = line.slice(6);
+                            if (dataStr === '[DONE]') continue;
+                            try {
+                                const json = JSON.parse(dataStr);
+                                const content = json.choices[0]?.delta?.content || '';
+                                if (content) {
+                                    aiResponse += content;
+                                    updateAIMessage(aiResponse); // 实时更新UI
+                                }
+                            } catch (e) { /* 忽略解析错误 */ }
+                        }
+                    }
+                }
+
+                // 5. 流式结束后，将AI的完整回复加入历史记录
+                chatHistory.push({ role: 'assistant', content: aiResponse });
+
+            } catch (error) {
+                console.error('错误:', error);
+                // 如果出错，移除刚才创建的空AI消息框，并显示错误
+                const lastMsg = chatBox.lastElementChild;
+                if (lastMsg && lastMsg.classList.contains('ai-message') && lastMsg.textContent === '') {
+                    chatBox.removeChild(lastMsg);
+                }
+                addMessage(`发生错误：${error.message}`, 'ai');
+                // 移除历史记录中最后一条用户的记录，因为请求失败了，防止上下文错乱
+                chatHistory.pop(); 
+            } finally {
+                // 6. 恢复发送按钮
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>';
+            }
+        }
+
+        // 添加消息到界面
+        function addMessage(message, role) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', role === 'user' ? 'user-message' : 'ai-message');
+            messageDiv.textContent = message;
+            chatBox.appendChild(messageDiv);
+            mainContent.scrollTop = mainContent.scrollHeight;
+        }
+
+        // 更新AI消息（流式显示）
+        function updateAIMessage(content) {
+            const aiMessages = chatBox.querySelectorAll('.ai-message');
+            if (aiMessages.length > 0) {
+                const lastAIMessage = aiMessages[aiMessages.length - 1];
+                lastAIMessage.textContent = content;
+                mainContent.scrollTop = mainContent.scrollHeight;
+            }
+        }
+
+        // 绑定事件
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
 </html>
